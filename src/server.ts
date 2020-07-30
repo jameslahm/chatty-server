@@ -15,7 +15,12 @@ export class Server {
   private app: Application;
   private io: SocketIOServer;
   private activeSockets: User[] = [];
-  private readonly DEFAULT_PORT = 5000;
+  private readonly DEFAULT_PORT = process.env.PORT || 5000;
+  private readonly allowOrigins = [
+    "http://localhost:3000",
+    "https://think-piece-ed400.web.app",
+    "https://think-piece-ed400.firebaseapp.com",
+  ];
 
   constructor() {
     this.initialize();
@@ -37,6 +42,12 @@ export class Server {
   }
 
   private handleSocketConnection(): void {
+    this.io.origins((origin, callback) => {
+      if (this.allowOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      }
+      callback("origin not allowed", false);
+    });
     this.io.on("connection", (socket) => {
       console.log("Socket connected.");
 
@@ -86,7 +97,7 @@ export class Server {
     });
   }
 
-  public listen(callback: (port: number) => void): void {
+  public listen(callback: (port: number | string) => void): void {
     this.httpServer.listen(this.DEFAULT_PORT, () => {
       callback(this.DEFAULT_PORT);
     });
